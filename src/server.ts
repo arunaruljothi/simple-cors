@@ -84,7 +84,7 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
 const healthPort = (parseInt(port) + 1).toString()
 const healthServer: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
   res.writeHead(200)
-  res.write("BAD")
+  res.write("OK")
   res.end()
 })
 
