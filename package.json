@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint .",
     "build": "npx tsc",
     "serve": "node dist/server.js",
     "debug": "npx nodemon src/server.ts"

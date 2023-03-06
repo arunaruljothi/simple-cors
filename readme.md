@@ -1,9 +1,13 @@
 # simple-cors
 
-## usage
+## why
 
-This small script was originally designed to be used with AWS as a reverse proxy to support CORS. It is meant to have the ALB target a small ecs task running it. When targeting this task the origin specified by the ALB is the target that is proxied.
-This server supports CORS pre-flights.
+This small script was originally designed to be used with AWS ALBs as a reverse proxy to support CORS. It is meant to have the ALB target a small ecs task running it. When targeting this task the origin specified by the ALB is the target that is proxied.
+
+features:
+* supports preflight requests
+* redirects same origins
+
 
 Ex.
 
@@ -29,6 +33,16 @@ client request to https://subdomain.app.com
 * PORT
   * port to server the proxy server, a health check is served on the port + 1,
   * defaults to 80 (health check on 81)
+* ENABLE_LOGGING
+  * set to 0 to disable logging
+  * enabled by default
+* PROXIED_PORT
+  * port to proxy requests to
+  * by default it will be set to the matching port for the protocol
+
+
+## health check
+A health check is served on `http://server:PORT+1/`
 
 ## commands
 
