@@ -3,10 +3,20 @@
 ## usage
 
 This small script was originally designed to be used with AWS as a reverse proxy to support CORS. It is meant to have the ALB target a small ecs task running it. When targeting this task the origin specified by the ALB is the target that is proxied.
+This server supports CORS pre-flights.
 
 Ex.
 
-Request to https://subdomain.app.com -> alb listener on 443 -> alb rule to proxy -> proxy requests from http://subdomain.app.com:442 -> alb listener on 442 -> ecs app target
+```
+client request to https://subdomain.app.com
+-> alb listener on 443 (ssl termination)
+-> alb rule to target proxy on ecs
+-> proxy sends request to http://subdomain.app.com:442
+-> alb listener on 442
+-> alb rule to target app on ecs
+-> proxy returns response with matching CORS headers
+-> client
+```
 
 
 ## options
