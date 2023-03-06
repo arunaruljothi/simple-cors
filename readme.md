@@ -19,13 +19,16 @@ client request to https://subdomain.app.com
 ```
 
 
-## options
+## env options
 
-ENV OPTIONS:
-
-* PROXY_AS_HTTPS -> set to "1" to enable https in the proxy target
-* ALLOWED_ORIGIN_ROOT -> set to the root of the origin that is allowed, ex google.com to allow anything.google.com
-
+* PROXY_AS_HTTPS
+  * set to "1" to enable https in the proxy target
+* ALLOWED_ORIGIN_ROOT
+  * set to the root of the origin that is allowed
+  * ex. google.com to allow anything.google.com
+* PORT
+  * port to server the proxy server, a health check is served on the port + 1,
+  * defaults to 80 (health check on 81)
 
 ## commands
 

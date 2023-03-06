@@ -9,6 +9,7 @@ import { createProxyServer } from 'http-proxy'
 const enableHttpsProxy = ((process.env.PROXY_AS_HTTPS || "0") === "1")
 const prefix = enableHttpsProxy ? "https" : "http"
 const allowedOriginRoot = process.env.ALLOWED_ORIGIN_ROOT || "*"
+const port = process.env.PORT || "80"
 
 // proxy server
 const proxy = createProxyServer({})
@@ -31,6 +32,14 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
   })
 })
 
+// health check server
+const healthPort = (parseInt(port) + 1).toString()
+const healthServer: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  res.writeHead(200)
+  res.write("OK")
+  res.end()
+})
 
-// launch server
-server.listen(8080)
+// launch servers
+server.listen(port)
+healthServer.listen(healthPort)
