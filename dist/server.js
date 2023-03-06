@@ -32,18 +32,18 @@ const server = (0, http_1.createServer)((req, res) => {
     const targetHostname = (new URL(fullTarget)).hostname;
     const target = `${protocol}://${targetHostname}:${proxiedPort}`;
     // set origin
-    const originUrl = req.headers.origin ? new URL(req.headers.origin) : undefined;
-    const originHostname = originUrl ? originUrl.hostname : "";
+    const origin = req.headers.origin;
+    const originHostname = req.headers.origin ? (new URL(req.headers.origin)).hostname : "";
     // if we previously proxied this result end it now
     if ("x-proxy-by" in req.headers) {
-        log(`RE_PROXY:: ${originUrl?.href} -> ${target}`);
+        log(`RE_PROXY:: ${origin} -> ${target}`);
         res.writeHead(400, "ATTEMPT AT RE PROXY");
         res.end();
         return;
     }
     // redirect on same origin or origin required and was not provided
-    if ((requiresOrigin && (originUrl == undefined)) || (originHostname == targetHostname)) {
-        log(`REDIRECT:: ${originUrl?.href} -> ${target}`);
+    if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)) {
+        log(`REDIRECT:: ${origin} -> ${target}`);
         res.writeHead(302, {
             'Location': fullTarget
         });
@@ -59,12 +59,12 @@ const server = (0, http_1.createServer)((req, res) => {
         if ('access-control-request-headers' in req.headers) {
             res.setHeader('access-control-allow-headers', allowedHeaders);
         }
-        res.setHeader('Access-Control-Allow-Origin', originUrl?.href || "*");
+        res.setHeader('Access-Control-Allow-Origin', origin || "*");
         res.setHeader('Access-Control-Allow-Credentials', "true");
-        log(`CORS:: ${originUrl?.href} -> ${fullTarget}`);
+        log(`CORS:: ${origin} -> ${fullTarget}`);
     }
     else {
-        log(`NO_CORS:: ${originUrl?.href} -> ${fullTarget}`);
+        log(`NO_CORS:: ${origin} -> ${fullTarget}`);
     }
     // mark the request has having been proxied
     res.setHeader("x-proxy-by", name);
@@ -76,7 +76,7 @@ const server = (0, http_1.createServer)((req, res) => {
 const healthPort = (parseInt(port) + 1).toString();
 const healthServer = (0, http_1.createServer)((req, res) => {
     res.writeHead(200);
-    res.write("BAD");
+    res.write("OK");
     res.end();
 });
 // launch servers
