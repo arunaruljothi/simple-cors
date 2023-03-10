@@ -9,6 +9,8 @@ import { createProxyServer } from 'http-proxy'
 const enableHttpsProxy = ((process.env.PROXY_AS_HTTPS || "0") === "1")
 const allowedOriginRoot = process.env.ALLOWED_ORIGIN_ROOT || "*"
 const enableLogging = ((process.env.ENABLE_LOGGING || "1") === "1")
+const disableReproxy = ((process.env.DISABLE_REPROXY || "0") === "1")
+const enableRedirect = ((process.env.ENABLE_REDIRECT || "0") === "1")
 const proxiedPort = process.env.PROXY_PORT || (enableHttpsProxy ? "443" : "80")
 
 const protocol = enableHttpsProxy ? "https" : "http"
@@ -40,22 +42,24 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
   const origin: string | undefined = req.headers.origin
   const originHostname = req.headers.origin ? (new URL(req.headers.origin)).hostname : ""
 
-  // // if we previously proxied this result end it now
-  // if ("x-proxy-by" in req.headers){
-  //   log (`RE_PROXY:: ${origin} -> ${target}`)
-  //   res.writeHead(400, "ATTEMPT AT RE PROXY")
-  //   res.end()
-  //   return
-  // }
-
-  // redirect on same origin or origin required and was not provided
-  if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)){
-    log(`REDIRECT:: ${origin} -> ${target}`)
-    res.writeHead(302, {
-      'Location': `${target}${req.url}`
-    })
+  // if we previously proxied this result end it now
+  if (disableReproxy && ("x-proxy-by" in req.headers)){
+    log (`RE_PROXY:: ${origin} -> ${target}`)
+    res.writeHead(400, "ATTEMPT AT RE PROXY")
     res.end()
     return
+  }
+
+  // redirect on same origin or origin required and was not provided
+  if (enableRedirect){
+    if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)){
+      log(`REDIRECT:: ${origin} -> ${target}`)
+      res.writeHead(302, {
+        'Location': `${target}${req.url}`
+      })
+      res.end()
+      return
+    }
   }
 
   // cors
