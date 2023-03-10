@@ -35,13 +35,13 @@ const server = (0, http_1.createServer)((req, res) => {
     // set origin
     const origin = req.headers.origin;
     const originHostname = req.headers.origin ? (new URL(req.headers.origin)).hostname : "";
-    // if we previously proxied this result end it now
-    if ("x-proxy-by" in req.headers) {
-        log(`RE_PROXY:: ${origin} -> ${target}`);
-        res.writeHead(400, "ATTEMPT AT RE PROXY");
-        res.end();
-        return;
-    }
+    // // if we previously proxied this result end it now
+    // if ("x-proxy-by" in req.headers){
+    //   log (`RE_PROXY:: ${origin} -> ${target}`)
+    //   res.writeHead(400, "ATTEMPT AT RE PROXY")
+    //   res.end()
+    //   return
+    // }
     // redirect on same origin or origin required and was not provided
     if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)) {
         log(`REDIRECT:: ${origin} -> ${target}`);
