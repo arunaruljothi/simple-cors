@@ -1,0 +1,23 @@
+name: on-push
+
+on:
+  push:
+    branches:
+      - "develop"
+
+
+jobs:
+  build_and_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+      - name: build
+        run: npm install && npm run build
+      - name: merge changes
+        run: |
+          git config --global user.name 'arunaruljothi'
+          git config --global user.email 'arunaruljothi@users.noreply.github.com'
+          git add .
+          git commit -am "build"
+          git push

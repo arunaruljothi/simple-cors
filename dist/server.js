@@ -28,7 +28,8 @@ const log = function (mes, level = "info") {
 const proxy = (0, http_proxy_1.createProxyServer)({});
 const server = (0, http_1.createServer)((req, res) => {
     // set target
-    const fullTarget = `${protocol}://${req.headers.host}${req.url}`;
+    const host = req.headers.host;
+    const fullTarget = `${protocol}://${host}${req.url}`;
     const targetHostname = (new URL(fullTarget)).hostname;
     const target = `${protocol}://${targetHostname}:${proxiedPort}`;
     // set origin
@@ -45,7 +46,7 @@ const server = (0, http_1.createServer)((req, res) => {
     if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)) {
         log(`REDIRECT:: ${origin} -> ${target}`);
         res.writeHead(302, {
-            'Location': fullTarget
+            'Location': `${target}${req.url}`
         });
         res.end();
         return;
@@ -61,10 +62,10 @@ const server = (0, http_1.createServer)((req, res) => {
         }
         res.setHeader('Access-Control-Allow-Origin', origin || "*");
         res.setHeader('Access-Control-Allow-Credentials', "true");
-        log(`CORS:: ${origin} -> ${fullTarget}`);
+        log(`CORS:: ${origin} -> ${target}`);
     }
     else {
-        log(`NO_CORS:: ${origin} -> ${fullTarget}`);
+        log(`NO_CORS:: ${origin} -> ${target}`);
     }
     // mark the request has having been proxied
     res.setHeader("x-proxy-by", name);
@@ -87,4 +88,4 @@ server.listen(port);
 healthServer.listen(healthPort);
 log(`server started on ${port} health check on ${healthPort}`);
 log(`proxied request will be made through protocol:${protocol} & port:${proxiedPort}`);
-log(`allowed origins:${allowedOriginRoot}, requests can ${requiresOrigin ? 'NOT' : ''} omit origin`);
+log(`allowed origins:${allowedOriginRoot}, requests can ${requiresOrigin ? 'NOT ' : ''}omit origin`);
