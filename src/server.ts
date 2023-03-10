@@ -31,7 +31,8 @@ const log = function(mes: string, level: "info" | "error" = "info"){
 const proxy = createProxyServer({})
 const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
   // set target
-  const fullTarget = `${protocol}://${req.headers.host}${req.url}`
+  const host = req.headers.host
+  const fullTarget = `${protocol}://${host}${req.url}`
   const targetHostname = (new URL(fullTarget)).hostname
   const target = `${protocol}://${targetHostname}:${proxiedPort}`
 
@@ -51,7 +52,7 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
   if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)){
     log(`REDIRECT:: ${origin} -> ${target}`)
     res.writeHead(302, {
-      'Location': fullTarget
+      'Location': `${target}${req.url}`
     })
     res.end()
     return
@@ -68,9 +69,9 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
     }
     res.setHeader('Access-Control-Allow-Origin', origin || "*")
     res.setHeader('Access-Control-Allow-Credentials', "true")
-    log(`CORS:: ${origin} -> ${fullTarget}`)
+    log(`CORS:: ${origin} -> ${target}`)
   }else{
-    log(`NO_CORS:: ${origin} -> ${fullTarget}`)
+    log(`NO_CORS:: ${origin} -> ${target}`)
   }
 
   // mark the request has having been proxied
