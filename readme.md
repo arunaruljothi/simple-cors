@@ -39,7 +39,15 @@ client request to https://subdomain.app.com
 * PROXIED_PORT
   * port to proxy requests to
   * by default it will be set to the matching port for the protocol
-
+* DISABLE_REPROXY
+  * disable reproxy attempts
+* ENABLE_REDIRECT
+  * enable redirecting on same origin or no origin
+* PER_DOMAIN
+  * configure per domain settings as
+    * old_domain@protocol:new_domain:port
+    * where protocol is `http or https`
+    * protocol and/or port may be omitted to use defaults
 
 ## health check
 A health check is served on `http://server:PORT+1/`

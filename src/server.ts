@@ -11,12 +11,14 @@ const allowedOriginRoot = process.env.ALLOWED_ORIGIN_ROOT || "*"
 const enableLogging = ((process.env.ENABLE_LOGGING || "1") === "1")
 const disableReproxy = ((process.env.DISABLE_REPROXY || "0") === "1")
 const enableRedirect = ((process.env.ENABLE_REDIRECT || "0") === "1")
-const proxiedPort = process.env.PROXY_PORT || (enableHttpsProxy ? "443" : "80")
+const proxyPort = process.env.PROXY_PORT || (enableHttpsProxy ? "443" : "80")
+const perDomainRaw = process.env.PER_DOMAIN
 
 const protocol = enableHttpsProxy ? "https" : "http"
 const port = process.env.PORT || "80"
 const name = `simple-proxy-${port}`
 const requiresOrigin = allowedOriginRoot != "*"
+const perDomain: {[key: string]: Array<string>} = {};
 
 // logger
 const log = function(mes: string, level: "info" | "error" = "info"){
@@ -29,14 +31,44 @@ const log = function(mes: string, level: "info" | "error" = "info"){
   }
 }
 
+// parse per domain
+const parseDomainSingle = function(domainTargetPort: string){
+  try {
+    const [domain, targetPort] = domainTargetPort.split('@')
+    let newProtocol, target, port
+    if (targetPort.split(':').length > 2){
+      [newProtocol, target, port] = targetPort.split(':')
+    }else {
+      newProtocol = protocol;
+      [target, port] = targetPort.split(':')
+    }
+    perDomain[domain] = [newProtocol, target, port || proxyPort]
+  } catch (err) {
+    log(String(err), 'error')
+  }
+}
+
+if (perDomainRaw != undefined){
+  perDomainRaw.split(',').forEach((s) => parseDomainSingle(s))
+}
+
+
 // proxy server
 const proxy = createProxyServer({})
-const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
-  // set target
+const handler = function (req: IncomingMessage, res: ServerResponse) {
+  // set host
   const host = req.headers.host
   const fullTarget = `${protocol}://${host}${req.url}`
   const targetHostname = (new URL(fullTarget)).hostname
-  const target = `${protocol}://${targetHostname}:${proxiedPort}`
+
+  // set target
+  let target = `${protocol}://${targetHostname}:${proxyPort}`
+  Object.keys(perDomain).forEach((s) => {
+    if (targetHostname.includes(s)){
+      const [t, h, p] = perDomain[s]
+      target = `${t}://${targetHostname.replace(s, h)}:${p}`
+    }
+  })
 
   // set origin
   const origin: string | undefined = req.headers.origin
@@ -51,15 +83,13 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
   }
 
   // redirect on same origin or origin required and was not provided
-  if (enableRedirect){
-    if ((requiresOrigin && (origin == undefined)) || (originHostname == targetHostname)){
-      log(`REDIRECT:: ${origin} -> ${target}`)
-      res.writeHead(302, {
-        'Location': `${target}${req.url}`
-      })
-      res.end()
-      return
-    }
+  if ( enableRedirect && (originHostname == targetHostname)){
+    log(`REDIRECT:: ${origin} -> ${target}`)
+    res.writeHead(302, {
+      'Location': `${target}${req.url}`
+    })
+    res.end()
+    return
   }
 
   // cors
@@ -83,6 +113,14 @@ const server: Server = createServer((req: IncomingMessage, res: ServerResponse) 
   proxy.web(req, res, {
     target: target
   })
+}
+// register function
+const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  try {
+    handler(req, res)
+  } catch (error) {
+    console.error(error)
+  }
 })
 
 // health check server
@@ -94,11 +132,13 @@ const healthServer: Server = createServer((req: IncomingMessage, res: ServerResp
 })
 
 // launch servers
-if (port == proxiedPort){
+if (port == proxyPort){
   throw "CANNOT PROXY ONTO LISTENING PORT"
 }
 server.listen(port)
 healthServer.listen(healthPort)
 log(`server started on ${port} health check on ${healthPort}`)
-log(`proxied request will be made through protocol:${protocol} & port:${proxiedPort}`)
+log(`proxied request will be made through protocol:${protocol} & port:${proxyPort}`)
 log(`allowed origins:${allowedOriginRoot}, requests can ${requiresOrigin ? 'NOT ' : ''}omit origin`)
+log('redirect domains:')
+console.log(perDomain)
