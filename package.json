@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cp": "node -e \"require('fs').copyFileSync('src/weConfig.json' , 'dist/weConfig.json')\"",
+    "cp": "node -e \"require('fs').copyFileSync('src/webConfig.json' , 'dist/webConfig.json')\"",
     "lint": "npx eslint .",
     "build": "npm run cp && npx tsc",
     "serve": "node dist/server.js",
