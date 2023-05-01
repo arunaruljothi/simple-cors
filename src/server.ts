@@ -24,7 +24,7 @@ let configFile = ''
 try {
   const configFile = fs.readFileSync('./webConfig.json', 'utf-8')
 } catch (err) {
-  console.error(`We encountered an error while reading the config: ${err}`, 'error')
+  console.error(`We encountered an error while reading the config: ${err}`)
 }
 const webConfig: CONFIG = JSON.parse(configFile)
 
