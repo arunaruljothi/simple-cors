@@ -4,21 +4,46 @@
 
 import { createServer, IncomingMessage, ServerResponse, Server } from "http"
 import { createProxyServer } from 'http-proxy'
+import * as fs from 'fs'
 
-// load env vars
-const enableHttpsProxy = ((process.env.PROXY_AS_HTTPS || "0") === "1")
-const allowedOriginRoot = process.env.ALLOWED_ORIGIN_ROOT || "*"
-const enableLogging = ((process.env.ENABLE_LOGGING || "1") === "1")
-const disableReproxy = ((process.env.DISABLE_REPROXY || "0") === "1")
-const enableRedirect = ((process.env.ENABLE_REDIRECT || "0") === "1")
-const proxyPort = process.env.PROXY_PORT || (enableHttpsProxy ? "443" : "80")
-const perDomainRaw = process.env.PER_DOMAIN
+// create interface to keep type checks happy
+interface CONFIG {
+  proxy_as_https: boolean
+  allowed_origin_root: string,
+  enable_logging: boolean,
+  disable_reproxy: boolean,
+  enable_redirect: boolean,
+  proxy_port: string,
+  per_domain: {[key: string]: string},
+  no_proxy: []
+}
+
+// read configuration
+let configFile = ''
+
+try {
+  const configFile = fs.readFileSync('./webConfig.json', 'utf-8')
+} catch (err) {
+  console.error(`We encountered an error while reading the config: ${err}`, 'error')
+}
+const webConfig: CONFIG = JSON.parse(configFile)
+
+
+// load configuration
+const enableHttpsProxy = webConfig.proxy_as_https
+const allowedOriginRoot = webConfig.allowed_origin_root
+const enableLogging = webConfig.enable_logging
+let disableReproxy = webConfig.disable_reproxy
+const enableRedirect = webConfig.enable_redirect
+const proxyPort = webConfig.proxy_port || (enableHttpsProxy ? "443" : "80")
+const perDomainRaw = webConfig.per_domain
 
 const protocol = enableHttpsProxy ? "https" : "http"
 const port = process.env.PORT || "80"
 const name = `simple-proxy-${port}`
 const requiresOrigin = allowedOriginRoot != "*"
 const perDomain: {[key: string]: Array<string>} = {};
+
 
 // logger
 const log = function(mes: string, level: "info" | "error" = "info"){
@@ -49,9 +74,15 @@ const parseDomainSingle = function(domainTargetPort: string){
 }
 
 if (perDomainRaw != undefined){
-  perDomainRaw.split(',').forEach((s) => parseDomainSingle(s))
+  for(let domain in perDomainRaw) parseDomainSingle(perDomainRaw[domain])
 }
 
+// no-proxy function
+const toggleReproxy = (domain: string) => {
+  Object.keys(perDomainRaw).includes(domain)
+    ? disableReproxy = true
+    : disableReproxy = false
+}
 
 // proxy server
 const proxy = createProxyServer({})
