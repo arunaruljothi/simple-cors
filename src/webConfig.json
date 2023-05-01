@@ -1,0 +1,12 @@
+{
+  "proxy_as_https": true,
+  "allowed_origin_root": "*",
+  "enable_logging": true,
+  "disable_reproxy": false,
+  "enable_redirect": true,
+  "proxy_port": "443",
+  "per_domain": {
+    "edgedb": "https://edgedb.ai.collectiblesgroup.com/"
+  },
+  "no_proxy": ["grafana"]
+}
